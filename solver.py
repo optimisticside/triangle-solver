@@ -171,24 +171,29 @@ class TriangleSolver:
             operator.mul, [s - x for x in self.sides], s
         )  # I thought I could do s * (s - x for x in t.sides)
 
+    def solve(self):
+        """Solves the triangle"""
+        self.validate()
+        side_count = len([x for x in self.sides if x is not None])
+
+        if side_count == 3:
+            self.calculate_three_angles()
+        elif side_count == 2:
+            self.calculate_two_angles()
+        elif side_count == 1:
+            self.calculate_two_sides()
+        else:
+            return None
+
+        self.calculate_other()
+        
+
 
 def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangle]:
     """Main solving routine"""
-    t = TriangleSolver(
+    solver = TriangleSolver(
         sides=ensure_size(sides, None, 3), angles=ensure_size(angles, None, 3)
     )
 
-    side_count = len([x for x in sides if x is not None])
-    t.validate()
-
-    if side_count == 3:
-        t.calculate_three_angles()
-    elif side_count == 2:
-        t.calculate_two_angles()
-    elif side_count == 1:
-        t.calculate_two_sides()
-    else:
-        return None
-
-    t.calculate_other()
-    return Triangle(sides=t.sides, angles=t.angles, perimeter=t.perimeter, area=t.area)
+    solver.solve()
+    return Triangle(sides=solver.sides, angles=solver.angles, perimeter=solver.perimeter, area=solver.area)
