@@ -60,13 +60,18 @@ class TriangleSolver:
     area: MaybeFloat = None
 
     def validate_side(self, i: int) -> bool:
+        """Checks if a side is valid"""
         a, b = rest(self.sides, i)
         return self.sides[i] < a + b
 
     def validate_angle(self, i: int) -> bool:
+        """Checks if an angle is valid"""
         return self.angles[i] < math.pi
 
     def validate(self):
+        """Validates the triangle and throws
+        a TriangleException if an error is found
+        """
         for i in range(3):
             if self.sides[i] is not None and not self.validate_side(i):
                 raise TriangleException(TriangleError.INVALID_SIDE)
