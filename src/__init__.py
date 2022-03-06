@@ -1,3 +1,18 @@
+"""Triangle Solver
+
+This module allows solving a triangle being give only three variables.
+It uses formulas such as the law of sines and law of cosines to calculate
+the other variables of the triangle, as well as additional things like
+its area and perimeter.
+
+It contains `solve`, which is the main function to solve a triangle,
+which internally will use the `TriangleSolver` class.
+
+Before solving, the triangle is validated. If the triangle is invalid,
+a `TriangleException` will be raised with an an error that can be found
+in the `TriangleError` enum.
+"""
+
 import math
 import operator
 import functools
@@ -11,8 +26,6 @@ MaybeFloat = Optional[float]
 
 class TriangleException(Exception):
     """Thrown during solving"""
-
-    pass
 
 
 @dataclass
@@ -40,6 +53,8 @@ def rest(arr: List, n: int) -> Tuple[int, int]:
 
 
 class TriangleError(Enum):
+    """Supplied when throwing a TriangleException"""
+
     NOT_ENOUGH_VARIABLES = 1
     TOO_MANY_VARIABLES = 2
     NO_SIDES = 3
@@ -122,9 +137,7 @@ class TriangleSolver:
                     continue
                 # Law of sines: sin(A) / a = sin(B) / b
                 # a = b * sin(A) / a
-                self.sides[j] = (
-                    math.sin(self.angles[i]) * self.sides[i] / self.angles[j]
-                )
+                self.sides[j] = math.sin(self.angles[i]) * self.sides[i] / self.angles[j]
 
     def calculate_two_angles(self):
         """When 2 sides and 1 angle are known"""
@@ -136,18 +149,14 @@ class TriangleSolver:
                 # Law of cosines: c^2 = a^2 + b^2 - 2ab cos(C)
                 # c = sqrt(a^2 + b^2 - 2ab cos(C))
                 a, b = rest(self.sides, i)
-                self.sides[i] = math.sqrt(
-                    a**2 + b**2 - 2 * a * b * math.cos(self.angles[i])
-                )
+                self.sides[i] = math.sqrt(a**2 + b**2 - 2 * a * b * math.cos(self.angles[i]))
             else:
                 for j in range(3):
                     if self.sides[j] is None:
                         continue
                     # Law of sines: sin A / a = sin B / b
                     # B = arcsin(b * sin A / a
-                    self.angles[j] = math.asin(
-                        math.sin(self.angles[i]) * self.sides[j] / self.sides[i]
-                    )
+                    self.angles[j] = math.asin(math.sin(self.angles[i]) * self.sides[j] / self.sides[i])
                 self.calculate_two_sides()
 
         self.calculate_three_angles()
@@ -158,9 +167,7 @@ class TriangleSolver:
             # Law of Cosines: c^2 = a^2 + b^2 - 2ab cos(C)
             # C = arccos((a^2 + b^2 - c^2) / 2ab)
             a, b = rest(self.sides, i)
-            self.angles[i] = math.acos(
-                (a**2 + b**2 - self.sides[i] ** 2) / (2 * a * b)
-            )
+            self.angles[i] = math.acos((a**2 + b**2 - self.sides[i] ** 2) / (2 * a * b))
 
     def calculate_other(self):
         """Calculate other unrelated variables"""
@@ -190,9 +197,7 @@ class TriangleSolver:
 
 def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangle]:
     """Main solving routine"""
-    solver = TriangleSolver(
-        sides=ensure_size(sides, None, 3), angles=ensure_size(angles, None, 3)
-    )
+    solver = TriangleSolver(sides=ensure_size(sides, None, 3), angles=ensure_size(angles, None, 3))
 
     solver.solve()
     return Triangle(
