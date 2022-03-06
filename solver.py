@@ -93,6 +93,9 @@ class TriangleSolver:
         if side_count + angle_count < 3:
             raise TriangleException(TriangleError.NOT_ENOUGH_VARIABLES)
 
+        if side_count == 0:
+            raise TriangleException(TriangleError.NO_SIDES)
+
     def calculate_last_angle(self):
         """Calculates one last unknown angle"""
         for i in range(3):
