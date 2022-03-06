@@ -54,8 +54,8 @@ class TriangleSolver:
     Used in solve() function.
     """
 
-    sides: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
-    angles: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
+    sides: List[MaybeFloat]
+    angles: List[MaybeFloat]
     perimeter: MaybeFloat = None
     area: MaybeFloat = None
 
@@ -139,15 +139,15 @@ class TriangleSolver:
                 self.sides[i] = math.sqrt(
                     a**2 + b**2 - 2 * a * b * math.cos(self.angles[i])
                 )
-        else:
-            for j in range(3):
-                if self.sides[j] is None:
-                    continue
-                # Law of sines: sin A / a = sin B / b
-                # B = arcsin(b * sin A / a
-                self.angles[j] = math.asin(
-                    math.sin(self.angles[i]) * self.sides[j] / self.sides[i]
-                )
+            else:
+                for j in range(3):
+                    if self.sides[j] is None:
+                        continue
+                    # Law of sines: sin A / a = sin B / b
+                    # B = arcsin(b * sin A / a
+                    self.angles[j] = math.asin(
+                        math.sin(self.angles[i]) * self.sides[j] / self.sides[i]
+                    )
                 self.calculate_two_sides()
 
         self.calculate_three_angles()
@@ -183,7 +183,7 @@ class TriangleSolver:
         elif side_count == 1:
             self.calculate_two_sides()
         else:
-            return None
+            return
 
         self.calculate_other()
 
