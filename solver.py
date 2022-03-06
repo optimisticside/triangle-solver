@@ -83,7 +83,7 @@ class TriangleSolver:
             angle = math.acos((a**2 + b**2 - self.sides[i] ** 2) / (2 * a * b))
             if math.isclose(angle, self.angles[i]):
                 raise TriangleException(TriangleError.INVALID_TRIANGLE)
-        
+
         side_count = len([x for x in self.sides if x is not None])
         angle_count = len([x for x in self.angles if x is not None])
 
@@ -108,7 +108,7 @@ class TriangleSolver:
         for i in range(3):
             if self.sides[i] is None:
                 continue
-            
+
             for j in range(3):
                 if self.sides[j] is not None:
                     continue
@@ -172,7 +172,7 @@ def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangl
 
     side_count = len([x for x in sides if x is not None])
     t.validate()
-    
+
     if side_count == 3:
         t.calculate_three_angles()
     elif side_count == 2:
