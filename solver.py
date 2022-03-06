@@ -186,7 +186,6 @@ class TriangleSolver:
             return None
 
         self.calculate_other()
-        
 
 
 def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangle]:
@@ -196,4 +195,9 @@ def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangl
     )
 
     solver.solve()
-    return Triangle(sides=solver.sides, angles=solver.angles, perimeter=solver.perimeter, area=solver.area)
+    return Triangle(
+        sides=solver.sides,
+        angles=solver.angles,
+        perimeter=solver.perimeter,
+        area=solver.area,
+    )
