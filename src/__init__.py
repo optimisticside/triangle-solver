@@ -72,7 +72,8 @@ class TriangleSolver:
 
     sides: List[MaybeFloat]
     angles: List[MaybeFloat]
-    alternatives: List[TriangleSolver] = dataclasses.field(default_factory=list)
+    is_alternative = False
+    alternatives: Optional[TriangleSolver] = None
     perimeter: MaybeFloat = None
     area: MaybeFloat = None
 
@@ -169,17 +170,15 @@ class TriangleSolver:
                     if self.sides[j] is None or i == j:
                         continue
                     # Law of sines: sin A / a = sin B / b
-                    # B = arcsin(b * sin A / a
-                    print(i, j)
+                    # B = arcsin(b * sin A / a)
                     self.angles[j] = math.asin(math.sin(self.angles[i]) * self.sides[j] / self.sides[i])
 
-                    if self.is_ambigous(i, j):
+                    if self.is_ambigous(i, j) and not self.is_alternative:
                         copy = dataclasses.replace(self)
                         copy.angles[j] = math.pi - self.angles[j]
-                        copy.solve(True)
-                        self.alternatives.append(copy)
+                        copy.calculate_two_sides()
+                        self.alternative = copy
 
-                    print(self)
                     self.calculate_two_sides()
 
     def calculate_three_angles(self):
@@ -199,13 +198,11 @@ class TriangleSolver:
             operator.mul, [s - x for x in self.sides], s
         )  # I thought I could do s * (s - x for x in t.sides)
 
-    def solve(self, no_validate=False):
+    def solve(self):
         """Solves the triangle"""
-        if not no_validate:
-            self.validate()
+        self.validate()
         side_count = len([x for x in self.sides if x is not None])
 
-        print(side_count)
         if side_count == 3:
             self.calculate_three_angles()
         elif side_count == 2:
@@ -213,8 +210,7 @@ class TriangleSolver:
         elif side_count == 1:
             self.calculate_two_sides()
 
-        if not no_validate:
-            self.validate(True)
+        self.validate(True)
         self.calculate_other()
 
 
