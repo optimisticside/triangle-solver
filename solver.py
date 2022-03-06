@@ -1,4 +1,6 @@
 import math
+import operator
+import functools
 from dataclasses import dataclass
 from typing import Tuple, List, Optional
 
@@ -8,6 +10,7 @@ MaybeFloat = Optional[float]
 
 class TriangleException(Exception):
     """Thrown during solving"""
+
     pass
 
 
@@ -16,15 +19,21 @@ class Triangle:
     """Complete triangle structure.
     Returned by solve function.
     """
+
     sides: Tuple[float, float, float]
     angles: Tuple[float, float, float]
+    perimeter: float
+    area: float
 
 
 @dataclass
 class IncompleteTriangle:
     """Used internally to store data while doing calcualtions"""
+
     sides: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
     angles: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
+    perimeter: MaybeFloat = None
+    area: MaybeFloat = None
 
 
 def ensure_size(arr: List, default, size: int) -> List:
@@ -79,9 +88,7 @@ def calculate_two_angles(t: IncompleteTriangle):
                     continue
                 # Law of sines: sin A / a = sin B / b
                 # B = arcsin(b * sin A / a
-                t.angles[j] = math.asin(
-                    math.sin(t.angles[i]) * t.sides[j] / t.sides[i]
-                )
+                t.angles[j] = math.asin(math.sin(t.angles[i]) * t.sides[j] / t.sides[i])
                 calculate_two_sides(t)
 
     calculate_three_angles(t)
@@ -93,7 +100,17 @@ def calculate_three_angles(t: IncompleteTriangle):
         # Law of Cosines: c^2 = a^2 + b^2 - 2ab cos(C)
         # C = arccos((a^2 + b^2 - c^2) / 2ab)
         a, b = rest(t.sides, i)
-        t.angles[i] = math.acos((a**2 + b**2 - t.sides[i]**2) / (2 * a * b))
+        t.angles[i] = math.acos((a**2 + b**2 - t.sides[i] ** 2) / (2 * a * b))
+
+
+def calculate_other(t: IncompleteTriangle):
+    """Calculate other unrelated variables"""
+    t.perimeter = sum(t.sides)
+    # Heron's formula: A = sqrt(s(s - a)(s - b)(s - c)) where s = (a + b + c) / 2
+    s = t.perimeter / 2
+    t.area = functools.reduce(
+        operator.mul, [s - x for x in t.sides], s
+    )  # I thought I could do s * (s - x for x in t.sides)
 
 
 def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangle]:
@@ -118,5 +135,5 @@ def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangl
     else:
         return None
 
-    return Triangle(sides=t.sides, angles=t.angles)
-
+    calculate_other(t)
+    return Triangle(sides=t.sides, angles=t.angles, perimeter=t.perimeter, area=t.area)
