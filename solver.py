@@ -26,16 +26,6 @@ class Triangle:
     area: float
 
 
-@dataclass
-class IncompleteTriangle:
-    """Used internally to store data while doing calcualtions"""
-
-    sides: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
-    angles: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
-    perimeter: MaybeFloat = None
-    area: MaybeFloat = None
-
-
 def ensure_size(arr: List, default, size: int) -> List:
     """Ensures the size of an array by using the default
     when an element does not exist.
@@ -48,69 +38,80 @@ def rest(arr: List, n: int) -> Tuple[int, int]:
     return [arr[x] for x in range(len(arr)) if x != n]
 
 
-def calculate_last_angle(t: IncompleteTriangle):
-    """Calculates one last unknown angle"""
-    for i in range(3):
-        if t.angles[i] is not None:
-            continue
-        a, b = rest(t.angles, i)
-        t.angles[i] = math.pi - (a + b)
+@dataclass
+class TriangleSolver:
+    sides: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
+    angles: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
+    perimeter: MaybeFloat = None
+    area: MaybeFloat = None
 
-
-def calculate_two_sides(t: IncompleteTriangle):
-    """When at least 1 side and 2 angles are known"""
-    calculate_last_angle(t)
-    for i in range(3):
-        if t.sides[i] is None:
-            continue
-        for j in range(3):
-            if t.sides[j] is not None:
+    def calculate_last_angle(self):
+        """Calculates one last unknown angle"""
+        for i in range(3):
+            if t.angles[i] is not None:
                 continue
-            # Law of sines: sin(A) / a = sin(B) / b
-            # a = b * sin(A) / a
-            t.sides[j] = math.sin(t.angles[i]) * t.sides[i] / t.angles[j]
+            a, b = rest(self.angles, i)
+            self.angles[i] = math.pi - (a + b)
 
+    def calculate_two_sides(self):
+        """When at least 1 side and 2 angles are known"""
+        self.calculate_last_angle()
+        for i in range(3):
+            if self.sides[i] is None:
+                continue
+            for j in range(3):
+                if self.sides[j] is not None:
+                    continue
+                # Law of sines: sin(A) / a = sin(B) / b
+                # a = b * sin(A) / a
+                self.sides[j] = (
+                    math.sin(self.angles[i]) * self.sides[i] / self.angles[j]
+                )
 
-def calculate_two_angles(t: IncompleteTriangle):
-    """When 2 sides and 1 angle are known"""
-    for i in range(3):
-        if t.angles[i] is None:
-            continue
+    def calculate_two_angles(self):
+        """When 2 sides and 1 angle are known"""
+        for i in range(3):
+            if self.angles[i] is None:
+                continue
 
-        if t.sides[i] is None:
-            # Law of cosines: c^2 = a^2 + b^2 - 2ab cos(C)
-            # c = sqrt(a^2 + b^2 - 2ab cos(C))
-            a, b = rest(t.sides, i)
-            t.sides[i] = math.sqrt(a**2 + b**2 - 2 * a * b * math.cos(t.angles[i]))
+            if self.sides[i] is None:
+                # Law of cosines: c^2 = a^2 + b^2 - 2ab cos(C)
+                # c = sqrt(a^2 + b^2 - 2ab cos(C))
+                a, b = rest(self.sides, i)
+                self.sides[i] = math.sqrt(
+                    a**2 + b**2 - 2 * a * b * math.cos(self.angles[i])
+                )
         else:
             for j in range(3):
-                if t.sides[j] is None:
+                if self.sides[j] is None:
                     continue
                 # Law of sines: sin A / a = sin B / b
                 # B = arcsin(b * sin A / a
-                t.angles[j] = math.asin(math.sin(t.angles[i]) * t.sides[j] / t.sides[i])
-                calculate_two_sides(t)
+                self.angles[j] = math.asin(
+                    math.sin(self.angles[i]) * self.sides[j] / self.sides[i]
+                )
+                self.calculate_two_sides()
 
-    calculate_three_angles(t)
+        self.calculate_three_angles()
 
+    def calculate_three_angles(self):
+        """When all 3 sides are known"""
+        for i in range(3):
+            # Law of Cosines: c^2 = a^2 + b^2 - 2ab cos(C)
+            # C = arccos((a^2 + b^2 - c^2) / 2ab)
+            a, b = rest(self.sides, i)
+            self.angles[i] = math.acos(
+                (a**2 + b**2 - self.sides[i] ** 2) / (2 * a * b)
+            )
 
-def calculate_three_angles(t: IncompleteTriangle):
-    """When all 3 sides are known"""
-    for i in range(3):
-        # Law of Cosines: c^2 = a^2 + b^2 - 2ab cos(C)
-        # C = arccos((a^2 + b^2 - c^2) / 2ab)
-        a, b = rest(t.sides, i)
-        t.angles[i] = math.acos((a**2 + b**2 - t.sides[i] ** 2) / (2 * a * b))
-
-
-def calculate_other(t: IncompleteTriangle):
-    """Calculate other unrelated variables"""
-    t.perimeter = sum(t.sides)
-    # Heron's formula: A = sqrt(s(s - a)(s - b)(s - c)) where s = (a + b + c) / 2
-    s = t.perimeter / 2
-    t.area = functools.reduce(
-        operator.mul, [s - x for x in t.sides], s
-    )  # I thought I could do s * (s - x for x in t.sides)
+    def calculate_other(self):
+        """Calculate other unrelated variables"""
+        self.perimeter = sum(self.sides)
+        # Heron's formula: A = sqrt(s(s - a)(s - b)(s - c)) where s = (a + b + c) / 2
+        s = self.perimeter / 2
+        self.area = functools.reduce(
+            operator.mul, [s - x for x in self.sides], s
+        )  # I thought I could do s * (s - x for x in t.sides)
 
 
 def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangle]:
@@ -118,22 +119,19 @@ def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangl
     side_count = len([x for x in sides if x is not None])
     angle_count = len([x for x in angles if x is not None])
 
-    # validate(sides, angles)
-    if side_count + angle_count != 3:
-        raise TriangleException("Only 3 numbers must be provided")
-
-    t = IncompleteTriangle(
+    # validator = TriangleValidate(sides, angles)
+    t = TriangleSolver(
         sides=ensure_size(sides, None, 3), angles=ensure_size(angles, None, 3)
     )
 
     if side_count == 3:
-        calculate_three_angles(t)
+        t.calculate_three_angles()
     elif side_count == 2:
-        calculate_two_angles(t)
+        t.calculate_two_angles()
     elif side_count == 1:
-        calculate_two_sides(t)
+        t.calculate_two_sides()
     else:
         return None
 
-    calculate_other(t)
+    t.calculate_other()
     return Triangle(sides=t.sides, angles=t.angles, perimeter=t.perimeter, area=t.area)
