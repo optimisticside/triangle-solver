@@ -13,11 +13,12 @@ a `TriangleException` will be raised with an an error that can be found
 in the `TriangleError` enum.
 """
 
+from __future__ import annotations
 import math
 import operator
 import functools
+import dataclasses
 from enum import Enum
-from dataclasses import dataclass
 from typing import Tuple, List, Optional
 
 
@@ -28,7 +29,7 @@ class TriangleException(Exception):
     """Thrown during solving"""
 
 
-@dataclass
+@dataclasses.dataclass
 class Triangle:
     """Complete triangle structure.
     Returned by solve function.
@@ -63,7 +64,7 @@ class TriangleError(Enum):
     INVALID_TRIANGLE = 6
 
 
-@dataclass
+@dataclasses.dataclass
 class TriangleSolver:
     """Main solving class for triangle solver.
     Used in solve() function.
@@ -71,19 +72,20 @@ class TriangleSolver:
 
     sides: List[MaybeFloat]
     angles: List[MaybeFloat]
+    alternatives: List[TriangleSolver] = dataclasses.field(default_factory=list)
     perimeter: MaybeFloat = None
     area: MaybeFloat = None
 
     def validate_side(self, i: int) -> bool:
         """Checks if a side is valid"""
         a, b = rest(self.sides, i)
-        return self.sides[i] < a + b
+        return (a is None or b is None) or (self.sides[i] < a + b and self.sides[i] > math.abs(a - b))
 
     def validate_angle(self, i: int) -> bool:
         """Checks if an angle is valid"""
         return self.angles[i] < math.pi
 
-    def validate(self):
+    def validate(self, complete=False):
         """Validates the triangle and throws
         a TriangleException if an error is found
         """
@@ -96,6 +98,9 @@ class TriangleSolver:
 
             if not self.validate_angle(i):
                 raise TriangleException(TriangleError.INVALID_ANGLE)
+
+            if not complete:
+                continue
 
             # Law of Cosines: c^2 = a^2 + b^2 - 2ab cos(C)
             # C = arccos((a^2 + b^2 - c^2) / 2ab)
@@ -115,6 +120,14 @@ class TriangleSolver:
 
         if side_count == 0:
             raise TriangleException(TriangleError.NO_SIDES)
+
+    def is_ambigous(self, a: int, b: int) -> bool:
+        """Determines if there are two solutions to the problem"""
+        return (
+            self.angles[b] < math.pi / 2
+            and self.sides[a] < self.sides[b]
+            and self.sides[a] > self.sides[b] * math.sin(self.angles[a])
+        )
 
     def calculate_last_angle(self):
         """Calculates one last unknown angle"""
@@ -150,16 +163,24 @@ class TriangleSolver:
                 # c = sqrt(a^2 + b^2 - 2ab cos(C))
                 a, b = rest(self.sides, i)
                 self.sides[i] = math.sqrt(a**2 + b**2 - 2 * a * b * math.cos(self.angles[i]))
+                self.calculate_three_angles()
             else:
                 for j in range(3):
-                    if self.sides[j] is None:
+                    if self.sides[j] is None or i == j:
                         continue
                     # Law of sines: sin A / a = sin B / b
                     # B = arcsin(b * sin A / a
+                    print(i, j)
                     self.angles[j] = math.asin(math.sin(self.angles[i]) * self.sides[j] / self.sides[i])
-                self.calculate_two_sides()
 
-        self.calculate_three_angles()
+                    if self.is_ambigous(i, j):
+                        copy = dataclasses.replace(self)
+                        copy.angles[j] = math.pi - self.angles[j]
+                        copy.solve(True)
+                        self.alternatives.append(copy)
+
+                    print(self)
+                    self.calculate_two_sides()
 
     def calculate_three_angles(self):
         """When all 3 sides are known"""
@@ -178,20 +199,22 @@ class TriangleSolver:
             operator.mul, [s - x for x in self.sides], s
         )  # I thought I could do s * (s - x for x in t.sides)
 
-    def solve(self):
+    def solve(self, no_validate=False):
         """Solves the triangle"""
-        self.validate()
+        if not no_validate:
+            self.validate()
         side_count = len([x for x in self.sides if x is not None])
 
+        print(side_count)
         if side_count == 3:
             self.calculate_three_angles()
         elif side_count == 2:
             self.calculate_two_angles()
         elif side_count == 1:
             self.calculate_two_sides()
-        else:
-            return
 
+        if not no_validate:
+            self.validate(True)
         self.calculate_other()
 
 
