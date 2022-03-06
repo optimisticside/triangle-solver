@@ -1,6 +1,7 @@
 import math
 import operator
 import functools
+from enum import Enum
 from dataclasses import dataclass
 from typing import Tuple, List, Optional
 
@@ -38,18 +39,66 @@ def rest(arr: List, n: int) -> Tuple[int, int]:
     return [arr[x] for x in range(len(arr)) if x != n]
 
 
+class TriangleError(Enum):
+    NOT_ENOUGH_VARIABLES = 1
+    TOO_MANY_VARIABLES = 2
+    NO_SIDES = 3
+    INVALID_SIDE = 4
+    INVALID_ANGLE = 5
+    INVALID_TRIANGLE = 6
+
+
 @dataclass
 class TriangleSolver:
+    """Main solving class for triangle solver.
+    Used in solve() function.
+    """
+
     sides: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
     angles: Tuple[MaybeFloat, MaybeFloat, MaybeFloat]
     perimeter: MaybeFloat = None
     area: MaybeFloat = None
 
+    def validate_side(self, i: int) -> bool:
+        a, b = rest(self.sides, i)
+        return self.sides[i] < a + b
+
+    def validate_angle(self, i: int) -> bool:
+        return self.angles[i] < math.pi
+
+    def validate(self):
+        for i in range(3):
+            if self.sides[i] is not None and not self.validate_side(i):
+                raise TriangleException(TriangleError.INVALID_SIDE)
+
+            if self.angles[i] is None:
+                continue
+
+            if not self.validate_angle(i):
+                raise TriangleException(TriangleError.INVALID_ANGLE)
+
+            # Law of Cosines: c^2 = a^2 + b^2 - 2ab cos(C)
+            # C = arccos((a^2 + b^2 - c^2) / 2ab)
+            a, b = rest(self.sides, i)
+            angle = math.acos((a**2 + b**2 - self.sides[i] ** 2) / (2 * a * b))
+            if math.isclose(angle, self.angles[i]):
+                raise TriangleException(TriangleError.INVALID_TRIANGLE)
+        
+        side_count = len([x for x in self.sides if x is not None])
+        angle_count = len([x for x in self.angles if x is not None])
+
+        if side_count + angle_count > 3:
+            raise TriangleException(TriangleError.TOO_MANY_VARIABLES)
+
+        if side_count + angle_count < 3:
+            raise TriangleException(TriangleError.NOT_ENOUGH_VARIABLES)
+
     def calculate_last_angle(self):
         """Calculates one last unknown angle"""
         for i in range(3):
-            if t.angles[i] is not None:
+            if self.angles[i] is not None:
                 continue
+
             a, b = rest(self.angles, i)
             self.angles[i] = math.pi - (a + b)
 
@@ -59,6 +108,7 @@ class TriangleSolver:
         for i in range(3):
             if self.sides[i] is None:
                 continue
+            
             for j in range(3):
                 if self.sides[j] is not None:
                     continue
@@ -116,14 +166,13 @@ class TriangleSolver:
 
 def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangle]:
     """Main solving routine"""
-    side_count = len([x for x in sides if x is not None])
-    angle_count = len([x for x in angles if x is not None])
-
-    # validator = TriangleValidate(sides, angles)
     t = TriangleSolver(
         sides=ensure_size(sides, None, 3), angles=ensure_size(angles, None, 3)
     )
 
+    side_count = len([x for x in sides if x is not None])
+    t.validate()
+    
     if side_count == 3:
         t.calculate_three_angles()
     elif side_count == 2:
