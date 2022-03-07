@@ -80,7 +80,7 @@ class TriangleSolver:
     def validate_side(self, i: int) -> bool:
         """Checks if a side is valid"""
         a, b = rest(self.sides, i)
-        return (a is None or b is None) or (self.sides[i] < a + b and self.sides[i] > math.abs(a - b))
+        return (a is None or b is None) or (self.sides[i] < a + b and self.sides[i] > abs(a - b))
 
     def validate_angle(self, i: int) -> bool:
         """Checks if an angle is valid"""
@@ -150,8 +150,8 @@ class TriangleSolver:
                 if self.sides[j] is not None:
                     continue
                 # Law of sines: sin(A) / a = sin(B) / b
-                # a = b * sin(A) / a
-                self.sides[j] = math.sin(self.angles[i]) * self.sides[i] / self.angles[j]
+                # b = a * sin(B) / sin(A)
+                self.sides[j] = math.sin(self.angles[j]) * self.sides[i] / math.sin(self.angles[i])
 
     def calculate_two_angles(self):
         """When 2 sides and 1 angle are known"""
@@ -177,6 +177,9 @@ class TriangleSolver:
                         copy = dataclasses.replace(self)
                         copy.angles[j] = math.pi - self.angles[j]
                         copy.calculate_two_sides()
+
+                        copy.validate(True)
+                        copy.calculate_other()
                         self.alternative = copy
 
                     self.calculate_two_sides()
