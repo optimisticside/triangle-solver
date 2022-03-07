@@ -107,20 +107,21 @@ class TriangleSolver:
             # C = arccos((a^2 + b^2 - c^2) / 2ab)
             a, b = rest(self.sides, i)
             angle = math.acos((a**2 + b**2 - self.sides[i] ** 2) / (2 * a * b))
-            if math.isclose(angle, self.angles[i]):
+            if not math.isclose(angle, self.angles[i], abs_tol=0.01):
                 raise TriangleException(TriangleError.INVALID_TRIANGLE)
 
         side_count = len([x for x in self.sides if x is not None])
         angle_count = len([x for x in self.angles if x is not None])
 
-        if side_count + angle_count > 3:
-            raise TriangleException(TriangleError.TOO_MANY_VARIABLES)
+        if not complete:
+            if side_count + angle_count > 3:
+                raise TriangleException(TriangleError.TOO_MANY_VARIABLES)
 
-        if side_count + angle_count < 3:
-            raise TriangleException(TriangleError.NOT_ENOUGH_VARIABLES)
+            if side_count + angle_count < 3:
+                raise TriangleException(TriangleError.NOT_ENOUGH_VARIABLES)
 
-        if side_count == 0:
-            raise TriangleException(TriangleError.NO_SIDES)
+            if side_count == 0:
+                raise TriangleException(TriangleError.NO_SIDES)
 
     def is_ambigous(self, a: int, b: int) -> bool:
         """Determines if there are two solutions to the problem"""
