@@ -73,7 +73,7 @@ class TriangleSolver:
     sides: List[MaybeFloat]
     angles: List[MaybeFloat]
     is_alternative = False
-    alternatives: Optional[TriangleSolver] = None
+    alternative: Optional[TriangleSolver] = None
     perimeter: MaybeFloat = None
     area: MaybeFloat = None
 
