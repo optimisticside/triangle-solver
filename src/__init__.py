@@ -37,6 +37,8 @@ class Triangle:
 
     sides: Tuple[float, float, float]
     angles: Tuple[float, float, float]
+    altitudes: Tuple[float, float, float]
+    medians: Tuple[float, float, float]
     perimeter: float
     area: float
 
@@ -72,6 +74,8 @@ class TriangleSolver:
 
     sides: List[MaybeFloat]
     angles: List[MaybeFloat]
+    altitudes: List[MaybeFloat] = dataclasses.field(default_factory=lambda: [None] * 3)
+    medians: List[MaybeFloat] = dataclasses.field(default_factory=lambda: [None] * 3)
     is_alternative = False
     alternative: Optional[TriangleSolver] = None
     perimeter: MaybeFloat = None
@@ -201,6 +205,11 @@ class TriangleSolver:
         self.area = functools.reduce(
             operator.mul, [s - x for x in self.sides], s
         )  # I thought I could do s * (s - x for x in t.sides)
+        for i in range(3):
+            a, b, = rest(range(3), i)
+            self.altitudes[i] = math.sin(self.angles[a]) * self.sides[b]
+            self.medians[i] = math.sqrt((self.sides[a]**2 + self.sides[b]**2 - self.sides[i]**2 / 2) / 2)
+
 
     def solve(self):
         """Solves the triangle"""
@@ -226,6 +235,8 @@ def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangl
     return Triangle(
         sides=solver.sides,
         angles=solver.angles,
+        altitudes=solver.altitudes,
+        medians=solver.medians,
         perimeter=solver.perimeter,
         area=solver.area,
     )
