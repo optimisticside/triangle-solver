@@ -15,8 +15,6 @@ in the `TriangleError` enum.
 
 from __future__ import annotations
 import math
-import operator
-import functools
 import dataclasses
 from enum import Enum
 from typing import Tuple, List, Optional
@@ -202,9 +200,7 @@ class TriangleSolver:
         self.perimeter = sum(self.sides)
         # Heron's formula: A = sqrt(s(s - a)(s - b)(s - c)) where s = (a + b + c) / 2
         s = self.perimeter / 2
-        self.area = functools.reduce(
-            operator.mul, [s - x for x in self.sides], s
-        )  # I thought I could do s * (s - x for x in t.sides)
+        self.area = s * (s - self.sides[0]) * (s - self.sides[1]) * (s - self.sides[2])
         for i in range(3):
             a, b = rest(range(3), i)
             self.altitudes[i] = math.sin(self.angles[a]) * self.sides[b]
