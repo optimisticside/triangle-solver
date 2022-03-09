@@ -206,10 +206,12 @@ class TriangleSolver:
             operator.mul, [s - x for x in self.sides], s
         )  # I thought I could do s * (s - x for x in t.sides)
         for i in range(3):
-            a, b, = rest(range(3), i)
+            (
+                a,
+                b,
+            ) = rest(range(3), i)
             self.altitudes[i] = math.sin(self.angles[a]) * self.sides[b]
-            self.medians[i] = math.sqrt((self.sides[a]**2 + self.sides[b]**2 - self.sides[i]**2 / 2) / 2)
-
+            self.medians[i] = math.sqrt((self.sides[a] ** 2 + self.sides[b] ** 2 - self.sides[i] ** 2 / 2) / 2)
 
     def solve(self):
         """Solves the triangle"""
