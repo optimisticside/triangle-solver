@@ -13,47 +13,40 @@ a `TriangleException` will be raised with an an error that can be found
 in the `TriangleError` enum.
 """
 
-from __future__ import annotations
 import math
-import dataclasses
-from enum import Enum
-from typing import Tuple, List, Optional
-
-
-MaybeFloat = Optional[float]
 
 
 class TriangleException(Exception):
     """Thrown during solving"""
 
 
-@dataclasses.dataclass
 class Triangle:
     """Complete triangle structure.
     Returned by solve function.
     """
 
-    sides: Tuple[float, float, float]
-    angles: Tuple[float, float, float]
-    altitudes: Tuple[float, float, float]
-    medians: Tuple[float, float, float]
-    perimeter: float
-    area: float
+    def __init__(self, sides, angles, altitudes, medians, perimeter, area):
+        self.sides = sides
+        self.angles = angles
+        self.altitudes = altitudes
+        self.medians = medians
+        self.perimeter = perimeter
+        self.area = area
 
 
-def ensure_size(arr: List, default, size: int) -> List:
+def ensure_size(arr, default, size):
     """Ensures the size of an array by using the default
     when an element does not exist.
     """
     return [arr[x] if x < len(arr) else default for x in range(size)]
 
 
-def rest(arr: List, n: int) -> Tuple[int, int]:
+def rest(arr, n):
     """Gets an array of the reamining elements of an array"""
     return [arr[x] for x in range(len(arr)) if x != n]
 
 
-class TriangleError(Enum):
+class TriangleError:
     """Supplied when throwing a TriangleException"""
 
     NOT_ENOUGH_VARIABLES = 1
@@ -64,27 +57,33 @@ class TriangleError(Enum):
     INVALID_TRIANGLE = 6
 
 
-@dataclasses.dataclass
 class TriangleSolver:
     """Main solving class for triangle solver.
     Used in solve() function.
     """
 
-    sides: List[MaybeFloat]
-    angles: List[MaybeFloat]
-    altitudes: List[MaybeFloat] = dataclasses.field(default_factory=lambda: [None] * 3)
-    medians: List[MaybeFloat] = dataclasses.field(default_factory=lambda: [None] * 3)
+    sides = None
+    angles = None
+    altitudes = None
+    medians = None
     is_alternative = False
-    alternative: Optional[TriangleSolver] = None
-    perimeter: MaybeFloat = None
-    area: MaybeFloat = None
+    alternative = None
+    perimeter = None
+    area = None
 
-    def validate_side(self, i: int) -> bool:
+    def __init__(self, sides=[], angles=[], is_alternative=False):
+        self.sides = sides
+        self.angles = angles
+        self.altitudes = [None] * 3
+        self.medians = [None] * 3
+        self.is_alternative = is_alternative
+
+    def validate_side(self, i):
         """Checks if a side is valid"""
         a, b = rest(self.sides, i)
         return (a is None or b is None) or (self.sides[i] < a + b and self.sides[i] > abs(a - b))
 
-    def validate_angle(self, i: int) -> bool:
+    def validate_angle(self, i):
         """Checks if an angle is valid"""
         return self.angles[i] < math.pi
 
@@ -125,7 +124,7 @@ class TriangleSolver:
             if side_count == 0:
                 raise TriangleException(TriangleError.NO_SIDES)
 
-    def is_ambigous(self, a: int, b: int) -> bool:
+    def is_ambigous(self, a, b):
         """Determines if there are two solutions to the problem"""
         return (
             self.angles[b] < math.pi / 2
@@ -177,8 +176,10 @@ class TriangleSolver:
                     self.angles[j] = math.asin(math.sin(self.angles[i]) * self.sides[j] / self.sides[i])
 
                     if self.is_ambigous(i, j) and not self.is_alternative:
-                        copy = dataclasses.replace(self)
+                        copy = TriangleSolver()
                         copy.is_alternative = True
+                        copy.angles = list(self.angles)
+                        copy.sides = list(self.sides)
                         copy.angles[j] = math.pi - self.angles[j]
                         copy.calculate_two_sides()
 
@@ -223,9 +224,19 @@ class TriangleSolver:
         self.calculate_other()
 
 
-def solve(sides: List[MaybeFloat], angles: List[MaybeFloat]) -> Optional[Triangle]:
+def display(triangle):
+    sides = [round(x, 3) for x in triangle.sides]
+    angles = [round(math.degrees(x), 3) for x in triangle.angles]
+    print("Sides: " + str(sides))
+    print("Angles: " + str(angles))
+    print("Perimeter: " + str(round(triangle.perimeter, 3)))
+    print("Area: " + str(round(triangle.area, 3)))
+
+
+def solve(sides, angles):
     """Main solving routine"""
-    solver = TriangleSolver(sides=ensure_size(sides, None, 3), angles=ensure_size(angles, None, 3))
+    angles = [math.radians(x) if x else None for x in angles]
+    solver = TriangleSolver(ensure_size(sides, None, 3), ensure_size(angles, None, 3))
 
     solver.solve()
     return Triangle(
